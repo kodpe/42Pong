@@ -7,56 +7,78 @@ cm		=	echo $(r)"\033[1;35m   > \033[0;35m"$(n)
 sls		=	$(shell ls $(SRC_DIR)/*.c 2>/dev/null | tr ' ' '\n')
 e_src	=	$(shell ls $(SRC_DIR)/*.c 2>/dev/null | wc -l | tr -d '\n')" sources"
 e_obj	=	$(shell ls $(OBJ_DIR)/*.o 2>/dev/null | wc -l | tr -d '\n')" objects"
-#-auto-sources-##############551203190822#
+grepr	=	$(shell grep -nH --color printf $(SRC_DIR)/*.c | grep -v "ft_printf")
+grepgc	=	$(shell grep -nH --color getchar $(SRC_DIR)/*.c)
+#-auto-sources-##############040317170922#
 SRC = $(addsuffix .c, \
 	main \
+	init_mlx \
+	destroy \
+	utils \
 	)
-#-auto-sources-##############551203190822#
+#-auto-sources-##############040317170922#
 
+INC_DIR	=	inc
 SRC_DIR	=	src
-SRC_PATH=	$(addprefix $(SRC_DIR)/, $(SRC))
 OBJ_DIR	=	obj
 OBJ		=	$(addprefix $(OBJ_DIR)/, $(SRC:.c=.o))
-DEPS	=	$(OBJ:.o=.d))
-# DEPS	=	$(OBJ:.o=.d)
+SRC_PATH=	$(addprefix $(SRC_DIR)/, $(SRC))
 
-NAME	=	prog
-
-CC		=	gcc
-CFLAGS 	=	-MMD -Wall -Wextra -Werror -g3
-FCFLAGS =	-MMD -Wall -Wextra -Werror -g3 -fsanitize=address
-INC		=	-I ./inc/
-RM		=	rm -rf
+PATH_MLX=	mlx_linux
+MAKEMLX =	$(MAKE) $(MFG) -C $(PATH_MLX)
 
 PATH_LIB=	libft/
 LIB 	=	libft.a
 INC_LIB	=	libft
 MAKELIB =	$(MAKE) $(MFG) -C $(PATH_LIB)
+
+NAME	=	miniRT
+
+CC		=	@gcc
+CFLAGS 	=	-Wall -Wextra -Werror -I $(INC_DIR) -I $(INC_LIB)
+# CFLAGS 	=	-Wall -Wextra -Werror -g3 -fsanitize=address -I $(INC_DIR) 
+
+MLX		=	-Lmlx_linux -lmlx_Linux -L/usr/lib -Imlx_linux -lXext -lX11 -lm -lz
+MKDIR	=	@mkdir -p
+RM		=	rm -rf
 MFG 	=	--no-print-directory
 
-LIBS	=	-lreadline
-
 #########################################
+
 all: 	$(NAME)
 
-$(NAME):$(LIB) $(OBJ)
-		$(CC) $(CFLAGS) $(OBJ) -o $(NAME) $(INC) $(PATH_LIB)$(LIB) $(LIBS)
-		echo -n $(cg) && du -bh $(NAME) | tr -d '$(NAME)' && echo -n $(r)
+$(OBJ_DIR)/%.o:$(SRC_DIR)/%.c
+		$(MKDIR) $(dir $@)
+# $(CC) $(CFLAGS) -c $< -o $@
+		$(CC) $(CFLAGS) -I/usr/include -Imlx_linux -O3 -c $< -o $@
+#\
+		
+		@echo $(cg)"(@) "$@" (<) "$<
+
+mlx:
+		$(MAKEMLX)
 
 $(LIB):
 		$(MAKELIB)
 
-$(OBJ_DIR)/%.o:$(SRC_DIR)/%.c
-		@mkdir -p $(dir $@)
-		@$(CC) $(CFLAGS) -c $< -o $@ $(INC)
-#\
+$(NAME):$(LIB) mlx $(OBJ)
+		$(CC) $(CFLAGS) -o $(NAME) $(SRC_PATH) $(PATH_LIB)$(LIB) $(MLX)
+		echo -n $(cg) && du -bh $(NAME) | tr -d '$(NAME)' && echo -n $(r)
 
-		@echo $(cg)"(@) "$@" (<) "$<
+clean:
+		$(MAKELIB) clean
+		$(RM) $(OBJ_DIR)
+		$(cr)$(e_obj)
 
-testf: $(LIB) $(OBJ)
-	$(CC) $(FCFLAGS) $(OBJ) -o $(NAME) $(INC) $(PATH_LIB)$(LIB) $(LIBS)
-	@echo $(r)
-	@./$(NAME)
+fclean: clean_mlx
+		$(MAKELIB) fclean
+		$(RM) $(OBJ_DIR) $(NAME)
+		$(cr)$(e_obj) && echo -n $(r)
+
+clean_mlx:
+		$(MAKEMLX) clean
+
+re:		fclean all
 
 val:
 		valgrind \
@@ -74,27 +96,21 @@ testvre:	re
 testv: all
 	make val
 
-clean:
-		$(MAKELIB) clean
-		$(RM) $(OBJ_DIR)
-		$(cr)$(e_obj)
-
-fclean:
-		$(MAKELIB) fclean
-		$(RM) $(OBJ_DIR) $(NAME)
-		$(cr)$(e_obj) && echo -n $(r)
-
-re:		fclean
-	make all
-
-bonus: all
-
 #########################################
 a:
+		$(MAKELIB) a
 		$(cb)$(e_src) && ls $(SRC_PATH)
+		$(cm)"diff check *"
+		echo $(sls) | tr ' ' '\n' | sort > o_sls.out
+		echo $(SRC_PATH) | tr ' ' '\n' | sort > o_src.out
+		-diff -y --color --suppress-common-lines o_sls.out o_src.out && rm *.out
+		$(cm)"printf check * $(grepr)"
+		$(cm)"getchar check * $(grepgc)"
 
--include $(DEPS)
+true:
+		$(MAKE) $(MFG) true -C $(PATH_LIB)
+		$(cm)"scan nm" && nm $(NAME) | grep "ft"
 
-.PHONY: all clean fclean re bonus a
+.PHONY:	all clean fclean re a true mlx clean_mlx
 
-.SILENT: all clean fclean re bonus a $(NAME) $(LIB)
+.SILENT: all clean fclean clean_mlx re a true $(NAME) $(LIB)
