@@ -6,49 +6,94 @@
 /*   By: sloquet <sloquet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/14 11:50:42 by chsimon           #+#    #+#             */
-/*   Updated: 2022/09/17 03:15:09 by sloquet          ###   ########.fr       */
+/*   Updated: 2022/11/06 13:3 by sloquet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "name.h"
+#include "pong.h"
 
-// 1503-1551
-int	exit_cross(t_rt *f)
+void	pong_exit(t_m *m)
 {
 	LOG
-
-	rt_destroy(f, 0, "exit_cross");
-	return (0);
+	if (m->mlx.ptr)
+		smlx_destroy(&m->mlx);
+	if (m->player)
+		unlink(m->player);
+	free(m->player);
+	free(m->opponent);
+	free(m->name_player);
+	free(m->name_opponent);
+	exit(0);
 }
 
-// 1503-1552
-int	key_press(int keycode, t_rt *f)
+void	game_init_specs(t_m *m)
 {
-	LOG
+	m->box.color_default = WHITE;
+	m->box.color = WHITE;
+	m->box.color_touch = LIME;
+	m->box.persistance = 0;
+	m->box.persistance_time = 50;
+	m->box.border = 20;
 
-	ft_printf("key_press()         : %d\n", keycode);
-	if (keycode == 0xff1b)
-		rt_destroy(f, 0, "exit_escape");
-	return (0);
+	m->g_max.x = SMLX_WIN_SIZE_X;
+	m->g_max.y = SMLX_WIN_SIZE_Y;
+	m->g_center.x = m->g_max.x / 2;
+	m->g_center.y = m->g_max.y / 2;
+
+	m->ball.color = WHITE;
+	m->ball.x = m->g_center.x;
+	m->ball.y = m->g_center.y;
+	if (rand() % 2)
+		m->ball.y_pad = 0.5;
+	else
+		m->ball.y_pad = -0.5;
+	m->ball.x_pad = 0;
+
+	m->g_racket_size = 100;
+	m->g_racket_pad = 10;
+	m->g_racket_color = WHITE;
+
+	m->r1.x_size = m->g_racket_size;
+	m->r1.x_pad = m->g_racket_pad;
+	m->r1.color = m->g_racket_color;
+	m->r1.x = m->g_center.x - (m->r1.x_size / 2);
+	m->r1.y = m->box.border + 20;
+
+	m->r2.x_size = m->g_racket_size;
+	m->r2.x_pad = m->g_racket_pad;
+	m->r2.color = m->g_racket_color;
+	m->r2.x = m->g_center.x - (m->r2.x_size / 2);
+	m->r2.y = m->g_max.y - (m->box.border + 20);
 }
 
-int	main(int ac, char **av, char **envp)
+void	log_data(t_m *m)
 {
-	t_rt	f;
+	dprintf(2, "GAME %s VS %s\n", m->player, m->opponent);
+	dprintf(2, "PLAYER_NAME    : [%s]\n", m->name_player);
+	dprintf(2, "PLAYER_FCODE   : [%s]\n", m->player);
+	dprintf(2, "OPONNENT_NAME  : [%s]\n", m->name_opponent);
+	dprintf(2, "OPONNENT_FCODE : [%s]\n", m->opponent);
+	if (m->server)
+		dprintf(2, "server : %s\nclient : %s\n", m->player, m->opponent);
+	else
+		dprintf(2, "server : %s\nclient : %s\n", m->opponent, m->player);
+}
 
-	LOG
+int	main(void)
+{
+	t_m	m;
 
-	rt_init_mlx(&f, ac);
-	//TODO PARSING
-	//TODO RAYTRACING
-	//TODO FREE ALL
-	mlx_put_image_to_window(f.mlx_id, f.win, f.img_id, 0, 0);
-	mlx_hook(f.win, 2, 1L << 0, &key_press, &f);
-	mlx_hook(f.win, 17, 0, &exit_cross, &f);
-	mlx_loop(f.mlx_id);
-	rt_destroy(&f, 36, "invalid exit");
-	return (0);
-	(void)av;
-	(void)ac;
-	(void)envp;
+	signal(SIGINT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
+	ft_memset(&m, 0, sizeof(t_m));
+	srand(time(&m.t));
+	game_init_specs(&m);
+	if (server_exist())
+		create_client(&m);
+	else
+		create_server(&m);
+	log_data(&m);
+	game_room(&m);
+	pong_exit(&m);
+	return (1);
 }
