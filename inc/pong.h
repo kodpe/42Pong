@@ -6,7 +6,7 @@
 /*   By: sloquet <sloquet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/04 13:26:11 by sloquet           #+#    #+#             */
-/*   Updated: 2022/11/06 18:46:58 by sloquet          ###   ########.fr       */
+/*   Updated: 2022/11/12 21:21:14 by sloquet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,8 +43,8 @@
 					printf("%s:%d %s()\n", __FILE__,__LINE__, __FUNCTION__);\
 					c_reset();
 
-# define PONG_DATA_PATH "/home/sylvain/Documents/42Pong/data"	
-# define PONG_PHOTO_PATH "/home/sylvain/Documents/42Pong/data_photo/"	
+# define PONG_DATA_PATH "/sgoinfre/goinfre/Perso/sloquett/data"	
+# define PONG_PHOTO_PATH "/sgoinfre/goinfre/Perso/sloquett/data"	
 
 # define PONG_STR_START	"Game will start in  s"
 # define PONG_STR_WAIT	"Waiting for an opponent"
